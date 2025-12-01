@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Processes ZIP code population data stored in a generic Map.
+ * PopulationProcessor performs calculations on ZIP code population data for menu option 1.
  * Uses Java generics to allow any key type and any numeric value type.
  *
  * @param <K> the type used for ZIP codes
@@ -22,9 +22,8 @@ public class PopulationProcessor<K, V extends Number> {
     }
 
     /**
-     * Calculates the total population by iterating over the map values
-     * using the iterator pattern.
-     *
+     * Menu Option #1: Total population for all ZIP Codes
+            * Calculates the total population by iterating over the map values using the iterator pattern.
      * @return the total population across all entries
      */
     public int totalPopulation() {
