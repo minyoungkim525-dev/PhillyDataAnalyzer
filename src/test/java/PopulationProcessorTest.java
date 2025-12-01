@@ -1,7 +1,6 @@
 import org.junit.jupiter.api.Test;
-import processing.PopulationProcessor;
+import processor.PopulationProcessor;
 
-import javax.annotation.processing.SupportedAnnotationTypes;
 import java.util.HashMap;
 import java.util.Map;
 
