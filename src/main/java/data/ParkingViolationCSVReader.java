@@ -37,7 +37,7 @@ public class ParkingViolationCSVReader implements CSVReader<ParkingViolation> {
                 String state = fields[4];
                 String ticket_number = fields[5];
 
-                Integer zipCode = null;
+                Integer zip_code = null;
                 if (fields.length >= 7) {
                     String zip = fields[6].trim();
                     if (!zip.isEmpty()) {

@@ -1,8 +1,14 @@
 package ui;
 
 import common.ParkingViolation;
+import common.House;
+import data.*;
+import processor.ParkingViolationProcessor;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -35,20 +41,101 @@ public class Main {
             return;
         }
 
-        start();
+        // Read all data
+        try {
+            // Read parking violations based on format
+            List<ParkingViolation> violations;
+            if (format.equals("csv")) {
+                ParkingViolationCSVReader csvReader = new ParkingViolationCSVReader(violationsFile);
+                violations = csvReader.readData();
+            } else {
+                ParkingViolationJSONReader jsonReader = new ParkingViolationJSONReader(violationsFile);
+                violations = jsonReader.readData();
+            }
+
+            // Read properties
+            HousingReader housingReader = new HousingReader(propertiesFile);
+            List<House> houses = housingReader.readData();
+
+            // Read population
+            PopulationFileReader popReader = new PopulationFileReader(populationFile);
+            Map<Integer, Integer> populations = popReader.readData();
+
+            // Create processor
+            ParkingViolationProcessor violationProcessor = new ParkingViolationProcessor(violations, populations);
+
+            // Start menu loop
+            start(violationProcessor);
+
+        } catch (Exception e) {
+            System.out.println("Error reading data files: " + e.getMessage());
+            return;
+        }
     }
 
-    // Utility method to check if the file exists and can be opened for reading (Error message 3)
     private static boolean canReadFile(String filename) {
         File f = new File(filename);
         return f.exists() && f.isFile() && f.canRead();
     }
 
-    private static void start() {
+    private static void start(ParkingViolationProcessor violationProcessor) {
         Scanner scanner = new Scanner(System.in);
-        print();
-        String input = scanner.nextLine().trim();
 
+        while (true) {
+            print();
+            String input = scanner.nextLine().trim();
+
+            if (input.equals("0")) {
+                System.out.println("Goodbye!");
+                break;
+            } else if (input.equals("2")) {
+                handleFinesPerCapita(violationProcessor);
+            } else if (input.equals("7")) {
+                handleMostCommonViolation(violationProcessor, scanner);
+            } else {
+                // Handle other menu options later
+                System.out.println("Feature not yet implemented.");
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static void handleFinesPerCapita(ParkingViolationProcessor processor) {
+        Map<Integer, Double> finesPerCapita = processor.calculateFinesPerCapita();
+
+        // Display results
+        for (Map.Entry<Integer, Double> entry : finesPerCapita.entrySet()) {
+            Integer zip_code = entry.getKey();
+            Double perCapita = entry.getValue();
+
+            // Format: 4 decimal places with trailing zeros
+            System.out.printf("%d %.4f%n", zip_code, perCapita);
+        }
+    }
+
+    // Menu option 7: Display most common violation type for a ZIP code.
+    private static void handleMostCommonViolation(ParkingViolationProcessor processor, Scanner scanner) {
+        System.out.print("Enter ZIP code: ");
+
+        try {
+            int zipCode = Integer.parseInt(scanner.nextLine().trim());
+
+            String mostCommon = processor.getMostCommonViolationType(zipCode);
+
+            if (mostCommon == null) {
+                System.out.println("No violations found for ZIP code " + zipCode);
+            } else {
+                // Get the count for additional context
+                Map<String, Integer> types = processor.getViolationTypesForZip(zipCode);
+                int count = types.get(mostCommon);
+
+                System.out.println("Most common violation in " + zipCode + ": " + mostCommon);
+                System.out.println("Occurrences: " + count);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid ZIP code. Please enter a valid number.");
+        }
     }
 
     private static void print() {
@@ -59,6 +146,7 @@ public class Main {
         System.out.println("3. Average residential market value for a ZIP Code");
         System.out.println("4. Average residential total livable area for a ZIP Code");
         System.out.println("5. Residential market value per capita for a ZIP Code");
+        System.out.println("7. Most common violation type for a ZIP Code");
         System.out.print("Enter selection: ");
     }
 
