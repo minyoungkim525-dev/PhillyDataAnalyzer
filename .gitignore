@@ -36,3 +36,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### data to test ###
+parking.csv
+properties.csv
+population.txt
+parking.json
