@@ -90,6 +90,8 @@ public class Main {
                 break;
             } else if (input.equals("2")) {
                 handleFinesPerCapita(violationProcessor);
+            } else if (input.equals("7")) {
+                handleMostCommonViolation(violationProcessor, scanner);
             } else {
                 // Handle other menu options later
                 System.out.println("Feature not yet implemented.");
@@ -112,6 +114,30 @@ public class Main {
         }
     }
 
+    // Menu option 7: Display most common violation type for a ZIP code.
+    private static void handleMostCommonViolation(ParkingViolationProcessor processor, Scanner scanner) {
+        System.out.print("Enter ZIP code: ");
+
+        try {
+            int zipCode = Integer.parseInt(scanner.nextLine().trim());
+
+            String mostCommon = processor.getMostCommonViolationType(zipCode);
+
+            if (mostCommon == null) {
+                System.out.println("No violations found for ZIP code " + zipCode);
+            } else {
+                // Get the count for additional context
+                Map<String, Integer> types = processor.getViolationTypesForZip(zipCode);
+                int count = types.get(mostCommon);
+
+                System.out.println("Most common violation in " + zipCode + ": " + mostCommon);
+                System.out.println("Occurrences: " + count);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid ZIP code. Please enter a valid number.");
+        }
+    }
+
     private static void print() {
         System.out.println("==== Main Menu ====");
         System.out.println("0. Exit");
@@ -120,6 +146,7 @@ public class Main {
         System.out.println("3. Average residential market value for a ZIP Code");
         System.out.println("4. Average residential total livable area for a ZIP Code");
         System.out.println("5. Residential market value per capita for a ZIP Code");
+        System.out.println("7. Most common violation type for a ZIP Code");
         System.out.print("Enter selection: ");
     }
 
