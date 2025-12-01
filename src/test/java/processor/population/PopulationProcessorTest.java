@@ -1,3 +1,5 @@
+package processor.population;
+
 import org.junit.jupiter.api.Test;
 import processor.PopulationProcessor;
 
