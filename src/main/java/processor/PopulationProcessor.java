@@ -14,8 +14,7 @@ public class PopulationProcessor {
     }
 
     /**
-     * Menu Option #1: Total population for all ZIP Codes.
-     * Uses a simple enhanced for-loop (no iterator, no generics).
+     * Menu Option #1: Total population for all ZIP Codes..
      */
     public int totalPopulation() {
         int sum = 0;
