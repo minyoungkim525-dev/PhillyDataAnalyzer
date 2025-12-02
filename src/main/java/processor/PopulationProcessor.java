@@ -1,20 +1,12 @@
 package processor;
 
-import java.util.Iterator;
 import java.util.Map;
 
-/**
- * PopulationProcessor performs calculations on ZIP code population data for menu option 1.
- * Uses Java generics to allow any key type and any numeric value type.
- *
- * @param <K> the type used for ZIP codes
- * @param <V> the numeric type used for population values
- */
-public class PopulationProcessor<K, V extends Number> {
+public class PopulationProcessor {
 
-    private final Map<K, V> population;
+    private final Map<Integer, Integer> population;
 
-    public PopulationProcessor(Map<K, V> population) {
+    public PopulationProcessor(Map<Integer, Integer> population) {
         if (population == null) {
             throw new IllegalArgumentException("Population map must not be null.");
         }
@@ -22,27 +14,24 @@ public class PopulationProcessor<K, V extends Number> {
     }
 
     /**
-     * Menu Option #1: Total population for all ZIP Codes
-            * Calculates the total population by iterating over the map values using the iterator pattern.
-     * @return the total population across all entries
+     * Menu Option #1: Total population for all ZIP Codes.
+     * Uses a simple enhanced for-loop (no iterator, no generics).
      */
     public int totalPopulation() {
         int sum = 0;
 
-        // Iterator pattern over entries
-        Iterator<Map.Entry<K, V>> it = population.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<K, V> entry = it.next();
-            V value = entry.getValue();
+        for (Map.Entry<Integer, Integer> entry : population.entrySet()) {
+            Integer value = entry.getValue();
 
             if (value == null) {
-                // Defensive Programming Element: catch ZIP codes with null population values but continue aggregating.
-                System.out.println("Warning: ZIP code " + entry.getKey() + " has a null population value.");
+                System.out.println("Warning: ZIP code " + entry.getKey() + 
+                                   " has a null population value.");
                 continue;
             }
 
-            sum += value.intValue();
+            sum += value;
         }
+
         return sum;
     }
 }
