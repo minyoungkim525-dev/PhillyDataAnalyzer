@@ -1,8 +1,9 @@
 package ui;
 
-import common.ParkingViolation;
 import common.House;
+import common.ParkingViolation;
 import data.*;
+import org.json.simple.parser.ParseException;
 import processor.HousingProcessor;
 import processor.ParkingViolationProcessor;
 import processor.PopulationProcessor;
@@ -10,11 +11,40 @@ import processor.PopulationProcessor;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * Main class for PhillyDataAnalyzer application.
+ * Implements Strategy pattern for menu option handling.
+ */
 public class Main {
+
+    // DESIGN PATTERN: Strategy - Interface for menu option handlers
+    @FunctionalInterface
+    private interface MenuStrategy {
+        void execute(ParkingViolationProcessor violationProcessor,
+                    PopulationProcessor populationProcessor,
+                    HousingProcessor housingProcessor,
+                    Scanner scanner);
+    }
+
+    // DESIGN PATTERN: Strategy - Map of menu options to their strategies
+    private static final Map<String, MenuStrategy> menuStrategies = initializeStrategies();
+    
+    private static Map<String, MenuStrategy> initializeStrategies() {
+        Map<String, MenuStrategy> strategies = new HashMap<>();
+        strategies.put("1", Main::handleTotalPopulation);
+        strategies.put("2", Main::handleFinesPerCapita);
+        strategies.put("3", Main::handleAverageResidentialMarket);
+        strategies.put("4", Main::handleLivableArea);
+        strategies.put("5", Main::handlePerCapitalResidentialValue);
+        strategies.put("6", Main::handlePropertyValueSummary);
+        strategies.put("7", Main::handleMostCommonViolation);
+        return strategies;
+    }
 
     public static void main(String args[]){
         if(args.length != 4){ // Error message 1
@@ -72,6 +102,12 @@ public class Main {
             // Start menu loop
             start(violationProcessor, populationProcessor, housingProcessor);
 
+        } catch (ParseException e) {
+            System.out.println("Error parsing JSON file: " + e.getMessage());
+            return;
+        } catch (IOException e) {
+            System.out.println("Error reading data files: " + e.getMessage());
+            return;
         } catch (Exception e) {
             System.out.println("Error reading data files: " + e.getMessage());
             return;
@@ -93,29 +129,46 @@ public class Main {
             print();
             String input = scanner.nextLine().trim();
 
-            switch (input) {
-                case "0" -> {
-                    System.out.println("Goodbye!");
-                    scanner.close();
-                    return; // Exit the method cleanly
-                }
-                case "1" -> handleTotalPopulation(populationProcessor);
-                case "2" -> handleFinesPerCapita(violationProcessor);
-                case "3" -> handleAverageResidentialMarket(housingProcessor, scanner);
-                case "4" -> handleLivableArea(housingProcessor, scanner);
-                case "5" -> handlePerCapitalResidentialValue(housingProcessor, scanner);
-                case "6" -> handlePropertyValueSummary(housingProcessor, scanner);
-                case "7" -> handleMostCommonViolation(violationProcessor, scanner);
-
-                default -> System.out.println("Feature not yet implemented.");
+            if (input.equals("0")) {
+                System.out.println("Goodbye!");
+                scanner.close();
+                return; // Exit the method cleanly
             }
-            // Blank line after each operation ***
+
+            // DESIGN PATTERN: Strategy - Execute strategy based on menu selection
+            MenuStrategy strategy = menuStrategies.get(input);
+            if (strategy != null) {
+                strategy.execute(violationProcessor, populationProcessor, housingProcessor, scanner);
+            } else {
+                System.out.println("Invalid selection. Please try again.");
+            }
+            
+            // Blank line after each operation
             System.out.println();
         }
     }
 
-    private static void handleFinesPerCapita(ParkingViolationProcessor processor) {
-        Map<Integer, Double> finesPerCapita = processor.calculateFinesPerCapita();
+    // Strategy implementations for each menu option
+
+    // Menu option 1: Display total populations for all ZIP codes.
+    private static void handleTotalPopulation(ParkingViolationProcessor violationProcessor,
+                                             PopulationProcessor populationProcessor,
+                                             HousingProcessor housingProcessor,
+                                             Scanner scanner) {
+        try {
+            int totalPop = populationProcessor.totalPopulation();
+            System.out.println(totalPop);
+        } catch (Exception e) {
+            System.out.println("An error occurred while computing total population: " + e.getMessage());
+        }
+    }
+
+    // Menu option 2: Display fines per capita for each ZIP Code.
+    private static void handleFinesPerCapita(ParkingViolationProcessor violationProcessor,
+                                             PopulationProcessor populationProcessor,
+                                             HousingProcessor housingProcessor,
+                                             Scanner scanner) {
+        Map<Integer, Double> finesPerCapita = violationProcessor.calculateFinesPerCapita();
 
         // Display results
         for (Map.Entry<Integer, Double> entry : finesPerCapita.entrySet()) {
@@ -127,74 +180,68 @@ public class Main {
         }
     }
 
-    // Menu option 2: Display total populations for all ZIP codes.
-    private static void handleTotalPopulation(PopulationProcessor populationProcessor){
-        try {
-            int totalPop = populationProcessor.totalPopulation();
-            System.out.println("Total population across all ZIP codes: " + totalPop);
-
-        } catch (Exception e) {
-            // Catch-any for unexpected processor failures
-            System.out.println("An error occurred while computing total population: " + e.getMessage());
-        }
-    }
-
     // Menu option 3: Display Average residential market value for a ZIP Code.
-    private static void handleAverageResidentialMarket(HousingProcessor hp, Scanner scanner) {
+    private static void handleAverageResidentialMarket(ParkingViolationProcessor violationProcessor,
+                                                       PopulationProcessor populationProcessor,
+                                                       HousingProcessor housingProcessor,
+                                                       Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
-            int avg = hp.getAverageMarketValue(zipCode);
+            int avg = housingProcessor.getAverageMarketValue(zipCode);
 
             if (avg <= 0) {
                 System.out.println("No valid residential market value data found for ZIP code " + zipCode + ".");
             } else {
-                System.out.println("Average residential market value for ZIP code " + zipCode + ": " + avg);
+                System.out.println(avg);
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
-            // Extra safety in case HousingProcessor throws unexpectedly
             System.out.println("An error occurred while calculating the average market value: " + e.getMessage());
         }
     }
 
     // Menu option 4: Average residential total livable area for a ZIP Code.
-    private static void handleLivableArea(HousingProcessor hp, Scanner scanner) {
+    private static void handleLivableArea(ParkingViolationProcessor violationProcessor,
+                                         PopulationProcessor populationProcessor,
+                                         HousingProcessor housingProcessor,
+                                         Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
-            int avg = hp.getAverageLivableArea(zipCode);
+            int avg = housingProcessor.getAverageLivableArea(zipCode);
 
             if (avg <= 0) {
                 System.out.println("No valid livable area data found for ZIP code " + zipCode + ".");
             } else {
-                System.out.println("Average residential total livable area for ZIP code " + zipCode + ": " + avg);
+                System.out.println(avg);
             }
 
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
-            // Extra safety if the processor encounters unexpected issues
             System.out.println("An error occurred while calculating the average livable area: " + e.getMessage());
         }
     }
 
     // Menu option 5: Display residential market value per capita for a ZIP Code.
-    private static void handlePerCapitalResidentialValue(HousingProcessor hp, Scanner scanner) {
+    private static void handlePerCapitalResidentialValue(ParkingViolationProcessor violationProcessor,
+                                                         PopulationProcessor populationProcessor,
+                                                         HousingProcessor housingProcessor,
+                                                         Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
-
-            int result = hp.getMarketValuePerCapita(zipCode);
+            int result = housingProcessor.getMarketValuePerCapita(zipCode);
 
             if (result <= 0) {
                 System.out.println("No valid market value or population data available for ZIP code " + zipCode + ".");
             } else {
-                System.out.println("Residential market value per capita for ZIP code " + zipCode + ": " + result);
+                System.out.println(result);
             }
 
         } catch (NumberFormatException e) {
@@ -205,21 +252,20 @@ public class Main {
     }
 
     // Menu option 6: Display property value summary for a ZIP Code.
-    private static void handlePropertyValueSummary(HousingProcessor hp, Scanner scanner) {
+    private static void handlePropertyValueSummary(ParkingViolationProcessor violationProcessor,
+                                                   PopulationProcessor populationProcessor,
+                                                   HousingProcessor housingProcessor,
+                                                   Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
-
-            HousingProcessor.PropertyValueSummary summary = hp.getPropertyValueSummary(zipCode);
+            HousingProcessor.PropertyValueSummary summary = housingProcessor.getPropertyValueSummary(zipCode);
 
             if (summary.getMin() == 0 && summary.getMax() == 0 && summary.getMedian() == 0) {
                 System.out.println("No valid residential market value data found for ZIP code " + zipCode + ".");
             } else {
-                System.out.println("Property value summary for ZIP code " + zipCode + ":");
-                System.out.println("  Minimum Market Value: " + summary.getMin());
-                System.out.println("  Maximum Market Value: " + summary.getMax());
-                System.out.println("  Median Market Value : " + summary.getMedian());
+                System.out.println(summary.getMin() + ", " + summary.getMax() + ", " + summary.getMedian());
             }
 
         } catch (NumberFormatException e) {
@@ -230,14 +276,17 @@ public class Main {
     }
 
     // Menu option 7: Display most common violation type for a ZIP code, shows top 3 violation types with counts and percentage
-    private static void handleMostCommonViolation(ParkingViolationProcessor processor, Scanner scanner) {
+    private static void handleMostCommonViolation(ParkingViolationProcessor violationProcessor,
+                                                  PopulationProcessor populationProcessor,
+                                                  HousingProcessor housingProcessor,
+                                                  Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
 
             // Get all violation types for this ZIP
-            Map<String, Integer> types = processor.getViolationTypesForZip(zipCode);
+            Map<String, Integer> types = violationProcessor.getViolationTypesForZip(zipCode);
 
             if (types.isEmpty()) {
                 System.out.println("No violations found for ZIP code " + zipCode);
@@ -271,6 +320,8 @@ public class Main {
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
+        } catch (Exception e) {
+            System.out.println("An error occurred while retrieving violation data: " + e.getMessage());
         }
     }
 
