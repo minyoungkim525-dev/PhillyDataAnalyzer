@@ -1,4 +1,4 @@
-package processor;
+package processor.housing;
 
 import common.House;
 import data.HousingReader;

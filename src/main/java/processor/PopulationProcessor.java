@@ -23,8 +23,8 @@ public class PopulationProcessor {
             Integer value = entry.getValue();
 
             if (value == null) {
-                System.out.println("Warning: ZIP code " + entry.getKey() + 
-                                   " has a null population value.");
+                System.out.println("Warning: ZIP code " + entry.getKey() +
+                        " has a null population value.");
                 continue;
             }
 

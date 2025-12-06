@@ -1,10 +1,11 @@
-package processor;
+package processor.housing;
 
 import common.House;
 import data.HousingReader;
 import data.PopulationReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import processor.HousingProcessor;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,11 +16,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * JUnit test class for HousingProcessor.getAverageMarketValue method.
+ * JUnit test class for HousingProcessor.getAverageLivableArea method.
  * Tests all cases to achieve 100% statement coverage.
  * Uses manual mocks instead of Mockito.
  */
-class GetAverageMarketValueTest {
+class GetAverageLivableAreaTest {
 
     private HousingReader housingReader;
     private PopulationReader populationReader;
@@ -32,8 +33,8 @@ class GetAverageMarketValueTest {
     }
 
     @Test
-    void testGetAverageMarketValue_ValidHouses() throws IOException {
-        // Test case: Calculate average with valid market values
+    void testGetAverageLivableArea_ValidAreas() throws IOException {
+        // Test case: Calculate average with valid livable areas
         int zipCode = 19104;
         List<House> houses = Arrays.asList(
                 new House(zipCode, 100000, 1000),
@@ -46,21 +47,21 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
-        assertEquals(200000, result);
+        assertEquals(2000, result);
     }
 
     @Test
-    void testGetAverageMarketValue_WithInvalidValues() throws IOException {
+    void testGetAverageLivableArea_WithInvalidValues() throws IOException {
         // Test case: Ignore null, zero, and negative values
         int zipCode = 19104;
         List<House> houses = Arrays.asList(
                 new House(zipCode, 100000, 1000),
-                new House(zipCode, null, 2000),  // null market value
-                new House(zipCode, 0, 3000),     // zero market value
-                new House(zipCode, -50000, 4000), // negative market value
-                new House(zipCode, 200000, 5000)
+                new House(zipCode, 200000, null),  // null livable area
+                new House(zipCode, 300000, 0),     // zero livable area
+                new House(zipCode, 400000, -500),   // negative livable area
+                new House(zipCode, 500000, 3000)
         );
 
         housingReader = new TestHousingReader(houses);
@@ -68,19 +69,19 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
-        assertEquals(150000, result); // (100000 + 200000) / 2
+        assertEquals(2000, result); // (1000 + 3000) / 2
     }
 
     @Test
-    void testGetAverageMarketValue_NoValidValues() throws IOException {
+    void testGetAverageLivableArea_NoValidValues() throws IOException {
         // Test case: All values are invalid
         int zipCode = 19104;
         List<House> houses = Arrays.asList(
-                new House(zipCode, null, 1000),
-                new House(zipCode, 0, 2000),
-                new House(zipCode, -10000, 3000)
+                new House(zipCode, 100000, null),
+                new House(zipCode, 200000, 0),
+                new House(zipCode, 300000, -1000)
         );
 
         housingReader = new TestHousingReader(houses);
@@ -88,13 +89,13 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
         assertEquals(0, result);
     }
 
     @Test
-    void testGetAverageMarketValue_EmptyList() throws IOException {
+    void testGetAverageLivableArea_EmptyList() throws IOException {
         // Test case: No houses for ZIP code
         int zipCode = 19104;
         List<House> houses = new ArrayList<>();
@@ -104,18 +105,18 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
         assertEquals(0, result);
     }
 
     @Test
-    void testGetAverageMarketValue_Rounding() throws IOException {
+    void testGetAverageLivableArea_Rounding() throws IOException {
         // Test case: Test rounding behavior
         int zipCode = 19104;
         List<House> houses = Arrays.asList(
                 new House(zipCode, 100000, 1000),
-                new House(zipCode, 100001, 2000)  // Average = 100000.5, should round to 100001
+                new House(zipCode, 200000, 1001)  // Average = 1000.5, should round to 1001
         );
 
         housingReader = new TestHousingReader(houses);
@@ -123,13 +124,13 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
-        assertEquals(100001, result);
+        assertEquals(1001, result);
     }
 
     @Test
-    void testGetAverageMarketValue_Memoization() throws IOException {
+    void testGetAverageLivableArea_Memoization() throws IOException {
         // Test case: Verify memoization works
         int zipCode = 19104;
         List<House> houses = Arrays.asList(
@@ -142,15 +143,15 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result1 = processor.getAverageMarketValue(zipCode);
-        int result2 = processor.getAverageMarketValue(zipCode);
+        int result1 = processor.getAverageLivableArea(zipCode);
+        int result2 = processor.getAverageLivableArea(zipCode);
 
-        assertEquals(150000, result1);
-        assertEquals(150000, result2);
+        assertEquals(1500, result1);
+        assertEquals(1500, result2);
     }
 
     @Test
-    void testGetAverageMarketValue_DifferentZipCodes() throws IOException {
+    void testGetAverageLivableArea_DifferentZipCodes() throws IOException {
         // Test case: Different ZIP codes should return different results
         List<House> allHouses = Arrays.asList(
                 new House(19104, 100000, 1000),
@@ -164,15 +165,15 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result19104 = processor.getAverageMarketValue(19104);
-        int result19105 = processor.getAverageMarketValue(19105);
+        int result19104 = processor.getAverageLivableArea(19104);
+        int result19105 = processor.getAverageLivableArea(19105);
 
-        assertEquals(150000, result19104);
-        assertEquals(350000, result19105);
+        assertEquals(1500, result19104);
+        assertEquals(3500, result19105);
     }
 
     @Test
-    void testGetAverageMarketValue_IOException() throws IOException {
+    void testGetAverageLivableArea_IOException() throws IOException {
         // Test case: Handle IOException gracefully
         int zipCode = 19104;
 
@@ -181,7 +182,7 @@ class GetAverageMarketValueTest {
         processor = HousingProcessor.getInstance(housingReader, populationReader);
         processor.clearCache();
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result = processor.getAverageLivableArea(zipCode);
 
         assertEquals(0, result);
     }

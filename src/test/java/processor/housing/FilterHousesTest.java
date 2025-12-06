@@ -1,10 +1,11 @@
-package processor;
+package processor.housing;
 
 import common.House;
 import data.HousingReader;
 import data.PopulationReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import processor.HousingProcessor;
 
 import java.util.Arrays;
 import java.util.HashMap;
