@@ -7,6 +7,11 @@ import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
 
+    /**
+     * PopulationFileReader reads ZIP code population data from a text file.
+     * Each line is expected to contain a ZIP code and a population value.
+     * Used by PopulationProcessor to support menu option #1.
+     */
 public class PopulationFileReader implements PopulationReader{
 
     private final String fileName;
