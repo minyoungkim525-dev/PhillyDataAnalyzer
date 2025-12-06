@@ -9,6 +9,7 @@ import processor.PopulationProcessor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -228,24 +229,45 @@ public class Main {
         }
     }
 
-    // Menu option 7: Display most common violation type for a ZIP code.
+    // Menu option 7: Display most common violation type for a ZIP code, shows top 3 violation types with counts and percentage
     private static void handleMostCommonViolation(ParkingViolationProcessor processor, Scanner scanner) {
         System.out.print("Enter ZIP code: ");
 
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
 
-            String mostCommon = processor.getMostCommonViolationType(zipCode);
+            // Get all violation types for this ZIP
+            Map<String, Integer> types = processor.getViolationTypesForZip(zipCode);
 
-            if (mostCommon == null) {
+            if (types.isEmpty()) {
                 System.out.println("No violations found for ZIP code " + zipCode);
             } else {
-                // Get the count for additional context
-                Map<String, Integer> types = processor.getViolationTypesForZip(zipCode);
-                int count = types.get(mostCommon);
+                // Calculate total violations
+                int totalViolations = 0;
+                for (int count : types.values()) {
+                    totalViolations += count;
+                }
 
-                System.out.println("Most common violation in " + zipCode + ": " + mostCommon);
-                System.out.println("Occurrences: " + count);
+                // Sort violations by count (descending)
+                List<Map.Entry<String, Integer>> sortedViolations = new ArrayList<>(types.entrySet());
+                sortedViolations.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+                // Display results
+                System.out.println("\n=== Violation Summary for ZIP " + zipCode + " ===");
+                System.out.println("Total violations: " + totalViolations);
+                System.out.println("\nTop violation types:");
+
+                // Show top 3 (or fewer if less than 3 types exist)
+                int displayCount = Math.min(3, sortedViolations.size());
+                for (int i = 0; i < displayCount; i++) {
+                    Map.Entry<String, Integer> entry = sortedViolations.get(i);
+                    String type = entry.getKey();
+                    int count = entry.getValue();
+                    double percentage = (double) count / totalViolations * 100;
+
+                    System.out.printf("%d. %s: %d (%.2f%%)\n",
+                            i + 1, type, count, percentage);
+                }
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
