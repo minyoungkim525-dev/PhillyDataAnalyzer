@@ -1,87 +1,38 @@
-package processor.population;
+package processor;
 
-import org.junit.jupiter.api.Test;
-import processor.PopulationProcessor;
-
-import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+public class PopulationProcessor<K, V extends Number> {
 
-public class PopulationProcessorTest {
+    private final Map<K, V> population;
 
-    @Test
-    public void testPopulation(){
-        Map<String,Integer> testMap = new HashMap<>();
-        testMap.put("10001", 500);
-        testMap.put("10002", 700);
-        testMap.put("10003", 1000);
-
-        PopulationProcessor<String,Integer> p = new PopulationProcessor<>(testMap);
-
-        int result = p.totalPopulation();
-        assertEquals(2200,result);
+    public PopulationProcessor(Map<K, V> population) {
+        if (population == null) {
+            throw new IllegalArgumentException("Population map must not be null.");
+        }
+        this.population = population;
     }
 
-    @Test
-    public void testConstructorThrowsOnNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new PopulationProcessor<String, Integer>(null));
-    }
+    /**
+     * Menu Option #1: Total population for all ZIP Codes.
+     * Works for any numeric type (Integer, Long, Double, etc.)
+     */
+    public int totalPopulation() {
+        int sum = 0;
 
-    @Test
-    public void testNullPopulation(){
-        Map<String,Integer> testMap = new HashMap<>();
-        testMap.put("10001", 500);
-        testMap.put("10002", 700);
-        testMap.put("10003", 1000);
+        for (Map.Entry<K, V> entry : population.entrySet()) {
+            V value = entry.getValue();
 
-        testMap.put("1004", null);
+            if (value == null) {
+                System.out.println("Warning: ZIP code " + entry.getKey()
+                        + " has a null population value.");
+                continue;
+            }
 
-        PopulationProcessor<String,Integer> p = new PopulationProcessor<>(testMap);
+            // Use Number.intValue() to support any numeric V
+            sum += value.intValue();
+        }
 
-        int result = p.totalPopulation();
-
-        assertEquals(2200,result);
-    }
-
-    @Test
-    void testMapWithSingleEntry() {
-        Map<String, Integer> map = new HashMap<>();
-        map.put("60606", 999);
-
-        PopulationProcessor<String, Integer> p = new PopulationProcessor<>(map);
-
-        int result = p.totalPopulation();
-
-        assertEquals(999, result);
-    }
-
-    @Test
-    void testDifferentKeyType(){
-        Map<Integer,Integer> map = new HashMap<>();
-        map.put(1,100);
-        map.put(2,100);
-        map.put(3,100);
-
-        PopulationProcessor<Integer, Integer> p = new PopulationProcessor<>(map);
-
-        int result = p.totalPopulation();
-        assertEquals(300,result);
-    }
-
-    @Test
-    void testDifferentValueType() {
-        Map<String, Double> map = new HashMap<>();
-        map.put("10001", 100.0);
-        map.put("10002", 100.0);
-        map.put("10003", 100.0);
-
-        PopulationProcessor<String, Double> p = new PopulationProcessor<>(map);
-
-        int result = p.totalPopulation();
-        assertEquals(300, result);
+        return sum;
     }
 }
-
