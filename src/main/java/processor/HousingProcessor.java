@@ -124,48 +124,53 @@ public class HousingProcessor {
         calculationCache.put(cacheKey, result);
         return result;
     }
-    
+
     /**
      * Menu Option #5: Residential market value per capita for a ZIP Code
      */
     public int getMarketValuePerCapita(int zipCode) {
         String cacheKey = "market_per_capita_" + zipCode;
-        
-        // MEMOIZATION: Check cache first
+
         if (calculationCache.containsKey(cacheKey)) {
             return (Integer) calculationCache.get(cacheKey);
         }
-        
+
         try {
             Map<Integer, Integer> populations = populationReader.readData();
             Integer population = populations.get(zipCode);
-            
+
             if (population == null || population == 0) {
                 calculationCache.put(cacheKey, 0);
                 return 0;
             }
-            
+
             List<House> houses = getHousesByZipCode(zipCode);
-            
-            // JAVA FEATURE: Streams and Lambda expressions
-            int totalMarketValue = houses.stream()
+            if (houses.isEmpty()) {
+                calculationCache.put(cacheKey, 0);
+                return 0;
+            }
+
+            // Using long to prevent overflow.
+            long totalMarketValue = houses.stream()
                     .map(House::getMarket_value)
                     .filter(Objects::nonNull)
-                    .filter(value -> value > 0)
-                    .mapToInt(Integer::intValue)
+                    .filter(v -> v > 0)
+                    .mapToLong(Integer::longValue)
                     .sum();
-            
-            int result = (int) Math.round((double) totalMarketValue / population);
-            
-            // MEMOIZATION: Cache the result
+
+            int result = (int) Math.round((double) totalMarketValue / (double) population);
+
             calculationCache.put(cacheKey, result);
             return result;
+
         } catch (Exception e) {
             calculationCache.put(cacheKey, 0);
             return 0;
         }
+
     }
-    
+
+
     /**
      * Menu Option #6: Property Value Summary for a ZIP Code
      * Returns: minimum, maximum, and median market value
