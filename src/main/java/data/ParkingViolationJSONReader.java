@@ -36,15 +36,25 @@ public class ParkingViolationJSONReader implements JSONReader<ParkingViolation> 
 
             String date = (String) pv.get("date");
 
-            // Allows the zip_code to be null
             Object zipObj = pv.get("zip_code");
             Integer zip_code = null;
-            if (zipObj instanceof Number) {
-                zip_code = ((Number) zipObj).intValue();
+            if (zipObj != null) {
+                try {
+                    zip_code = Integer.parseInt(zipObj.toString());
+                } catch (NumberFormatException e) {
+                }
             }
 
             String violation = (String) pv.get("violation");
-            int fine = ((Number) pv.get("fine")).intValue();
+
+            Object fineObj = pv.get("fine");
+            int fine = 0;
+            if (fineObj instanceof Number) {
+                fine = ((Number) fineObj).intValue();
+            } else if (fineObj != null) {
+                fine = Integer.parseInt(fineObj.toString());
+            }
+
             String state = (String) pv.get("state");
 
             ParkingViolation parkingViolation = new ParkingViolation(ticket_number, plate_id, date, zip_code, violation, fine, state);
