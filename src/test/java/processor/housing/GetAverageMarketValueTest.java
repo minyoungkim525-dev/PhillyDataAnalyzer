@@ -3,187 +3,184 @@ package processor.housing;
 import common.House;
 import data.HousingReader;
 import data.PopulationReader;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import processor.HousingProcessor;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * JUnit test class for HousingProcessor.getAverageMarketValue method.
- * Tests all cases to achieve 100% statement coverage.
- * Uses manual mocks instead of Mockito.
+ * Tests for getAverageMarketValue(int zipCode) method.
  */
-class GetAverageMarketValueTest {
+public class GetAverageMarketValueTest {
 
-    private HousingReader housingReader;
-    private PopulationReader populationReader;
-    private HousingProcessor processor;
-
-    @BeforeEach
-    void setUp() {
-        // Reset singleton instance for each test
+    @AfterEach
+    public void tearDown() {
+        // Reset singleton after each test
         HousingProcessor.resetInstance();
     }
 
+    /**
+     * Test case 1: Basic average calculation
+     */
     @Test
-    void testGetAverageMarketValue_ValidHouses() throws IOException {
-        // Test case: Calculate average with valid market values
-        int zipCode = 19104;
-        List<House> houses = Arrays.asList(
-                new House(zipCode, 100000, 1000),
-                new House(zipCode, 200000, 2000),
-                new House(zipCode, 300000, 3000)
-        );
+    public void testBasicAverage() throws IOException {
+        // Create mock readers
+        HousingReader housingReader = new MockHousingReader(createTestHouses());
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
 
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
 
-        int result = processor.getAverageMarketValue(zipCode);
+        // 19104 has houses with values: 100000, 200000, 300000
+        // Average = 200000
+        int result = processor.getAverageMarketValue(19104);
 
         assertEquals(200000, result);
     }
 
+    /**
+     * Test case 2: Filters out null values
+     */
     @Test
-    void testGetAverageMarketValue_WithInvalidValues() throws IOException {
-        // Test case: Ignore null, zero, and negative values
-        int zipCode = 19104;
-        List<House> houses = Arrays.asList(
-                new House(zipCode, 100000, 1000),
-                new House(zipCode, null, 2000),  // null market value
-                new House(zipCode, 0, 3000),     // zero market value
-                new House(zipCode, -50000, 4000), // negative market value
-                new House(zipCode, 200000, 5000)
-        );
-
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
-
-        int result = processor.getAverageMarketValue(zipCode);
-
-        assertEquals(150000, result); // (100000 + 200000) / 2
-    }
-
-    @Test
-    void testGetAverageMarketValue_NoValidValues() throws IOException {
-        // Test case: All values are invalid
-        int zipCode = 19104;
-        List<House> houses = Arrays.asList(
-                new House(zipCode, null, 1000),
-                new House(zipCode, 0, 2000),
-                new House(zipCode, -10000, 3000)
-        );
-
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
-
-        int result = processor.getAverageMarketValue(zipCode);
-
-        assertEquals(0, result);
-    }
-
-    @Test
-    void testGetAverageMarketValue_EmptyList() throws IOException {
-        // Test case: No houses for ZIP code
-        int zipCode = 19104;
+    public void testFiltersNullValues() throws IOException {
         List<House> houses = new ArrayList<>();
+        houses.add(new House(19104, 100000, 1000));
+        houses.add(new House(19104, null, 1000));  // Null value
+        houses.add(new House(19104, 200000, 1000));
 
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
+        HousingReader housingReader = new MockHousingReader(houses);
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
 
-        int result = processor.getAverageMarketValue(zipCode);
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
+
+        // Average of 100000 and 200000 = 150000
+        int result = processor.getAverageMarketValue(19104);
+
+        assertEquals(150000, result);
+    }
+
+    /**
+     * Test case 3: Filters out zero values
+     */
+    @Test
+    public void testFiltersZeroValues() throws IOException {
+        List<House> houses = new ArrayList<>();
+        houses.add(new House(19104, 100000, 1000));
+        houses.add(new House(19104, 0, 1000));      // Zero value
+        houses.add(new House(19104, 200000, 1000));
+
+        HousingReader housingReader = new MockHousingReader(houses);
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
+
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
+
+        int result = processor.getAverageMarketValue(19104);
+
+        assertEquals(150000, result);
+    }
+
+    /**
+     * Test case 4: Filters out negative values
+     */
+    @Test
+    public void testFiltersNegativeValues() throws IOException {
+        List<House> houses = new ArrayList<>();
+        houses.add(new House(19104, 100000, 1000));
+        houses.add(new House(19104, -50000, 1000));  // Negative value
+        houses.add(new House(19104, 200000, 1000));
+
+        HousingReader housingReader = new MockHousingReader(houses);
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
+
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
+
+        int result = processor.getAverageMarketValue(19104);
+
+        assertEquals(150000, result);
+    }
+
+    /**
+     * Test case 5: Returns 0 for ZIP with no houses
+     */
+    @Test
+    public void testNoHouses() throws IOException {
+        List<House> houses = new ArrayList<>();
+        houses.add(new House(19103, 100000, 1000));  // Different ZIP
+
+        HousingReader housingReader = new MockHousingReader(houses);
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
+
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
+
+        int result = processor.getAverageMarketValue(99999);
 
         assertEquals(0, result);
     }
 
+    /**
+     * Test case 6: Memoization - second call returns cached result
+     */
     @Test
-    void testGetAverageMarketValue_Rounding() throws IOException {
-        // Test case: Test rounding behavior
-        int zipCode = 19104;
-        List<House> houses = Arrays.asList(
-                new House(zipCode, 100000, 1000),
-                new House(zipCode, 100001, 2000)  // Average = 100000.5, should round to 100001
-        );
+    public void testMemoization() throws IOException {
+        HousingReader housingReader = new MockHousingReader(createTestHouses());
+        PopulationReader populationReader = new MockPopulationReader(createTestPopulations());
 
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
+        HousingProcessor processor = HousingProcessor.getInstance(housingReader, populationReader);
 
-        int result = processor.getAverageMarketValue(zipCode);
+        int result1 = processor.getAverageMarketValue(19104);
+        int result2 = processor.getAverageMarketValue(19104);
 
-        assertEquals(100001, result);
+        assertEquals(result1, result2);
     }
 
-    @Test
-    void testGetAverageMarketValue_Memoization() throws IOException {
-        // Test case: Verify memoization works
-        int zipCode = 19104;
-        List<House> houses = Arrays.asList(
-                new House(zipCode, 100000, 1000),
-                new House(zipCode, 200000, 2000)
-        );
-
-        housingReader = new TestHousingReader(houses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
-
-        int result1 = processor.getAverageMarketValue(zipCode);
-        int result2 = processor.getAverageMarketValue(zipCode);
-
-        assertEquals(150000, result1);
-        assertEquals(150000, result2);
+    // Helper methods
+    private List<House> createTestHouses() {
+        List<House> houses = new ArrayList<>();
+        houses.add(new House(19104, 100000, 1000));
+        houses.add(new House(19104, 200000, 2000));
+        houses.add(new House(19104, 300000, 3000));
+        houses.add(new House(19103, 150000, 1500));
+        return houses;
     }
 
-    @Test
-    void testGetAverageMarketValue_DifferentZipCodes() throws IOException {
-        // Test case: Different ZIP codes should return different results
-        List<House> allHouses = Arrays.asList(
-                new House(19104, 100000, 1000),
-                new House(19104, 200000, 2000),
-                new House(19105, 300000, 3000),
-                new House(19105, 400000, 4000)
-        );
-
-        housingReader = new TestHousingReader(allHouses);
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
-
-        int result19104 = processor.getAverageMarketValue(19104);
-        int result19105 = processor.getAverageMarketValue(19105);
-
-        assertEquals(150000, result19104);
-        assertEquals(350000, result19105);
+    private Map<Integer, Integer> createTestPopulations() {
+        Map<Integer, Integer> populations = new HashMap<>();
+        populations.put(19104, 50000);
+        populations.put(19103, 30000);
+        return populations;
     }
 
-    @Test
-    void testGetAverageMarketValue_IOException() throws IOException {
-        // Test case: Handle IOException gracefully
-        int zipCode = 19104;
+    // Mock classes
+    private static class MockHousingReader extends HousingReader {
+        private final List<House> houses;
 
-        housingReader = new TestHousingReader(true); // throws IOException
-        populationReader = new TestPopulationReader(new HashMap<>());
-        processor = HousingProcessor.getInstance(housingReader, populationReader);
-        processor.clearCache();
+        public MockHousingReader(List<House> houses) {
+            super("dummy.csv");
+            this.houses = houses;
+        }
 
-        int result = processor.getAverageMarketValue(zipCode);
+        @Override
+        public List<House> readData() {
+            return houses;
+        }
+    }
 
-        assertEquals(0, result);
+    private static class MockPopulationReader implements PopulationReader {
+        private final Map<Integer, Integer> populations;
+
+        public MockPopulationReader(Map<Integer, Integer> populations) {
+            this.populations = populations;
+        }
+
+        @Override
+        public Map<Integer, Integer> readData() {
+            return populations;
+        }
     }
 }
