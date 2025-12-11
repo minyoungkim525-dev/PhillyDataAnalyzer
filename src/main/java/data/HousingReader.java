@@ -115,16 +115,23 @@ public class HousingReader implements CSVReader<House> {
     }
 
     private Integer parsePositiveInteger(String value) {
-        if (value == null || value.isEmpty()) {
+        if (value == null) {
             return null;
         }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        // Remove commas and dollar signs, but keep digits and decimal point (e.g. "264,800.0" -> "264800.0")
+        String cleaned = trimmed.replaceAll("[,$]", "");
 
         try {
-            int parsed = Integer.parseInt(value);
+            double parsedDouble = Double.parseDouble(cleaned);
+            int parsed = (int) Math.round(parsedDouble);
+
             return (parsed > 0) ? parsed : null;
         } catch (NumberFormatException e) {
             return null;
         }
     }
-
 }

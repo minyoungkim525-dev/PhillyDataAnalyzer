@@ -14,7 +14,8 @@ public class PopulationProcessor<K, V extends Number> {
     }
 
     /**
-     * Menu Option #1: Total population for all ZIP Codes..
+     * Menu Option #1: Total population for all ZIP Codes.
+     * Works for any numeric type (Integer, Long, Double, etc.)
      */
     public int totalPopulation() {
         int sum = 0;
@@ -23,11 +24,12 @@ public class PopulationProcessor<K, V extends Number> {
             V value = entry.getValue();
 
             if (value == null) {
-                System.out.println("Warning: ZIP code " + entry.getKey() +
-                        " has a null population value.");
+                System.out.println("Warning: ZIP code " + entry.getKey()
+                        + " has a null population value.");
                 continue;
             }
 
+            // Use Number.intValue() to support any numeric V
             sum += value.intValue();
         }
 
