@@ -4,6 +4,7 @@ import common.House;
 import data.HousingReader;
 import data.PopulationReader;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import processor.HousingProcessor;
 
@@ -19,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for getAverageMarketValue(int zipCode) method.
  */
 public class GetAverageMarketValueTest {
+
+    @BeforeEach
+    public void setUp() {
+        HousingProcessor.resetInstance();
+    }
 
     @AfterEach
     public void tearDown() {
