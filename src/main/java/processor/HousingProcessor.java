@@ -47,6 +47,12 @@ public class HousingProcessor {
     }
     
     private HousingProcessor(HousingReader housingReader, PopulationReader populationReader) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader must not be null.");
+        }
+        if (populationReader == null) {
+            throw new IllegalStateException("PopulationReader must not be null.");
+        }
         this.housingReader = housingReader;
         this.populationReader = populationReader;
         
@@ -59,6 +65,12 @@ public class HousingProcessor {
     
     // DESIGN PATTERN: Singleton - thread-safe getInstance method
     public static HousingProcessor getInstance(HousingReader housingReader, PopulationReader populationReader) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader must not be null.");
+        }
+        if (populationReader == null) {
+            throw new IllegalStateException("PopulationReader must not be null.");
+        }
         if (instance == null) {
             synchronized (lock) {
                 if (instance == null) {
@@ -73,6 +85,9 @@ public class HousingProcessor {
      * Menu Option #3: Average residential market value for a ZIP Code
      */
     public int getAverageMarketValue(int zipCode) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
         String cacheKey = "avg_market_" + zipCode;
         
         // MEMOIZATION: Check cache first
@@ -101,6 +116,9 @@ public class HousingProcessor {
      * Menu Option #4: Average residential total livable area for a ZIP Code
      */
     public int getAverageLivableArea(int zipCode) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
         String cacheKey = "avg_livable_" + zipCode;
         
         // MEMOIZATION: Check cache first
@@ -129,6 +147,12 @@ public class HousingProcessor {
      * Menu Option #5: Residential market value per capita for a ZIP Code
      */
     public int getMarketValuePerCapita(int zipCode) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
+        if (populationReader == null) {
+            throw new IllegalStateException("PopulationReader is not initialized.");
+        }
         String cacheKey = "market_per_capita_" + zipCode;
 
         if (calculationCache.containsKey(cacheKey)) {
@@ -176,6 +200,9 @@ public class HousingProcessor {
      * Returns: minimum, maximum, and median market value
      */
     public PropertyValueSummary getPropertyValueSummary(int zipCode) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
         String cacheKey = "property_summary_" + zipCode;
         
         // MEMOIZATION: Check cache first
@@ -217,6 +244,12 @@ public class HousingProcessor {
      */
     @SafeVarargs
     public final List<House> filterHouses(List<House> houses, Predicate<House>... predicates) {
+        if (houses == null) {
+            throw new IllegalStateException("Houses list must not be null.");
+        }
+        if (predicates == null) {
+            throw new IllegalStateException("Predicates must not be null.");
+        }
         // JAVA FEATURE: Streams and Lambda expressions
         Stream<House> stream = houses.stream();
         for (Predicate<House> predicate : predicates) {
@@ -229,6 +262,9 @@ public class HousingProcessor {
      * Helper method to get houses by ZIP code with caching
      */
     private List<House> getHousesByZipCode(int zipCode) {
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
         // MEMOIZATION: Check cache for houses by ZIP
         if (housesByZipCache.containsKey(zipCode)) {
             return housesByZipCache.get(zipCode);
@@ -236,6 +272,9 @@ public class HousingProcessor {
         
         try {
             List<House> allHouses = housingReader.readData();
+            if (allHouses == null) {
+                return new ArrayList<>();
+            }
             
             // JAVA FEATURE: Streams and Lambda expressions
             List<House> houses = allHouses.stream()
@@ -288,6 +327,9 @@ public class HousingProcessor {
      */
     public Iterator<House> getHouseIterator(int zipCode) {
         List<House> houses = getHousesByZipCode(zipCode);
+        if (houses == null) {
+            throw new IllegalStateException("Houses list cannot be null.");
+        }
         return houses.iterator();
     }
     
@@ -296,6 +338,12 @@ public class HousingProcessor {
      * JAVA FEATURE: Varargs - Accepts multiple ZIP codes
      */
     public Map<Integer, Integer> calculateAverageMarketValuesParallel(int... zipCodes) {
+        if (zipCodes == null) {
+            throw new IllegalStateException("ZIP codes array must not be null.");
+        }
+        if (housingReader == null) {
+            throw new IllegalStateException("HousingReader is not initialized.");
+        }
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         Map<Integer, Integer> results = new ConcurrentHashMap<>();
         

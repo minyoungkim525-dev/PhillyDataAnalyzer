@@ -13,15 +13,30 @@ public class ParkingViolationProcessor {
 
 
     public ParkingViolationProcessor(List<ParkingViolation> violations, Map<Integer, Integer> populations) {
+        if (violations == null) {
+            throw new IllegalStateException("Violations list must not be null.");
+        }
+        if (populations == null) {
+            throw new IllegalStateException("Populations map must not be null.");
+        }
         this.violations = violations;
         this.populations = populations;
     }
 
 
     public Map<Integer, Double> calculateFinesPerCapita() {
+        if (violations == null) {
+            throw new IllegalStateException("Violations list is not initialized.");
+        }
+        if (populations == null) {
+            throw new IllegalStateException("Populations map is not initialized.");
+        }
         Map<Integer, Integer> totalFinesByZip = new TreeMap<>();
 
         for (ParkingViolation violation : violations) {
+            if (violation == null) {
+                continue;
+            }
             // Filter: ignore if ZIP is null
             if (violation.getZip_code() == null) {
                 continue;
@@ -70,10 +85,16 @@ public class ParkingViolationProcessor {
 
     // Gets violation type counts for each ZIP code.
     public Map<Integer, Map<String, Integer>> getViolationTypesByZip() {
+        if (violations == null) {
+            throw new IllegalStateException("Violations list is not initialized.");
+        }
         // TreeMap keeps ZIP codes sorted
         Map<Integer, Map<String, Integer>> violationsByZip = new TreeMap<>();
 
         for (ParkingViolation violation : violations) {
+            if (violation == null) {
+                continue;
+            }
             // Skip if ZIP code is null
             if (violation.getZip_code() == null) {
                 continue;
@@ -98,9 +119,15 @@ public class ParkingViolationProcessor {
 
     // Gets violation type counts for a specific ZIP code.
     public Map<String, Integer> getViolationTypesForZip(int zipCode) {
+        if (violations == null) {
+            throw new IllegalStateException("Violations list is not initialized.");
+        }
         Map<String, Integer> typeCounts = new HashMap<>();
 
         for (ParkingViolation violation : violations) {
+            if (violation == null) {
+                continue;
+            }
             // Only count violations for the specified ZIP code
             if (violation.getZip_code() != null && violation.getZip_code() == zipCode) {
                 String violationType = violation.getViolation();
@@ -116,7 +143,7 @@ public class ParkingViolationProcessor {
     public String getMostCommonViolationType(int zipCode) {
         Map<String, Integer> typeCounts = getViolationTypesForZip(zipCode);
 
-        if (typeCounts.isEmpty()) {
+        if (typeCounts == null || typeCounts.isEmpty()) {
             return null;
         }
 
@@ -125,6 +152,9 @@ public class ParkingViolationProcessor {
         int maxCount = 0;
 
         for (Map.Entry<String, Integer> entry : typeCounts.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
             if (entry.getValue() > maxCount) {
                 maxCount = entry.getValue();
                 mostCommon = entry.getKey();

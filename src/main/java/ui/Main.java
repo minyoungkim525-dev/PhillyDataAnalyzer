@@ -85,19 +85,39 @@ public class Main {
                 ParkingViolationJSONReader jsonReader = new ParkingViolationJSONReader(violationsFile);
                 violations = jsonReader.readData();
             }
+            if (violations == null) {
+                throw new IllegalStateException("Failed to read parking violations data.");
+            }
 
             // Read properties
             HousingReader housingReader = new HousingReader(propertiesFile);
             List<House> houses = housingReader.readData();
+            if (houses == null) {
+                throw new IllegalStateException("Failed to read housing data.");
+            }
 
             // Read population
             PopulationFileReader popReader = new PopulationFileReader(populationFile);
             Map<Integer, Integer> populations = popReader.readData();
+            if (populations == null) {
+                throw new IllegalStateException("Failed to read population data.");
+            }
 
             // Create processors
             PopulationProcessor populationProcessor = new PopulationProcessor(populations);
             ParkingViolationProcessor violationProcessor = new ParkingViolationProcessor(violations, populations);
             HousingProcessor housingProcessor = HousingProcessor.getInstance(housingReader, popReader);
+
+            // Validate processors are not null
+            if (populationProcessor == null) {
+                throw new IllegalStateException("PopulationProcessor could not be initialized.");
+            }
+            if (violationProcessor == null) {
+                throw new IllegalStateException("ParkingViolationProcessor could not be initialized.");
+            }
+            if (housingProcessor == null) {
+                throw new IllegalStateException("HousingProcessor could not be initialized.");
+            }
 
             // Start menu loop
             start(violationProcessor, populationProcessor, housingProcessor);
@@ -122,6 +142,15 @@ public class Main {
     private static void start(ParkingViolationProcessor violationProcessor,
                               PopulationProcessor populationProcessor,
                               HousingProcessor housingProcessor) {
+        if (violationProcessor == null) {
+            throw new IllegalStateException("ParkingViolationProcessor must not be null.");
+        }
+        if (populationProcessor == null) {
+            throw new IllegalStateException("PopulationProcessor must not be null.");
+        }
+        if (housingProcessor == null) {
+            throw new IllegalStateException("HousingProcessor must not be null.");
+        }
 
         Scanner scanner = new Scanner(System.in);
 
@@ -155,9 +184,15 @@ public class Main {
                                              PopulationProcessor populationProcessor,
                                              HousingProcessor housingProcessor,
                                              Scanner scanner) {
+        if (populationProcessor == null) {
+            System.out.println("Error: PopulationProcessor is not available.");
+            return;
+        }
         try {
             int totalPop = populationProcessor.totalPopulation();
             System.out.println("Total population: " + totalPop);
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("An error occurred while computing total population: " + e.getMessage());
         }
@@ -168,16 +203,33 @@ public class Main {
                                              PopulationProcessor populationProcessor,
                                              HousingProcessor housingProcessor,
                                              Scanner scanner) {
-        Map<Integer, Double> finesPerCapita = violationProcessor.calculateFinesPerCapita();
+        if (violationProcessor == null) {
+            System.out.println("Error: ParkingViolationProcessor is not available.");
+            return;
+        }
+        try {
+            Map<Integer, Double> finesPerCapita = violationProcessor.calculateFinesPerCapita();
+            if (finesPerCapita == null) {
+                System.out.println("Error: Could not calculate fines per capita.");
+                return;
+            }
 
-        // Display results
-        System.out.printf("%-12s %-15s%n", "Zip Code:", "Fines per Capita:");
-        for (Map.Entry<Integer, Double> entry : finesPerCapita.entrySet()) {
-            Integer zip_code = entry.getKey();
-            Double perCapita = entry.getValue();
+            // Display results
+            System.out.printf("%-12s %-15s%n", "Zip Code:", "Fines per Capita:");
+            for (Map.Entry<Integer, Double> entry : finesPerCapita.entrySet()) {
+                if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+                    continue;
+                }
+                Integer zip_code = entry.getKey();
+                Double perCapita = entry.getValue();
 
-            // Format: 4 decimal places with trailing zeros
-            System.out.printf("%-12d %-15.4f%n", zip_code, perCapita);
+                // Format: 4 decimal places with trailing zeros
+                System.out.printf("%-12d %-15.4f%n", zip_code, perCapita);
+            }
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("An error occurred while calculating fines per capita: " + e.getMessage());
         }
     }
 
@@ -186,6 +238,10 @@ public class Main {
                                                        PopulationProcessor populationProcessor,
                                                        HousingProcessor housingProcessor,
                                                        Scanner scanner) {
+        if (housingProcessor == null) {
+            System.out.println("Error: HousingProcessor is not available.");
+            return;
+        }
         System.out.print("Enter ZIP code: ");
         String input = scanner.nextLine().trim();
 
@@ -204,6 +260,8 @@ public class Main {
             } else {
                 System.out.println("Average residential market value for " + zipCode + ": $" + avg);
             }
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
@@ -216,7 +274,10 @@ public class Main {
                                          PopulationProcessor populationProcessor,
                                          HousingProcessor housingProcessor,
                                          Scanner scanner) {
-
+        if (housingProcessor == null) {
+            System.out.println("Error: HousingProcessor is not available.");
+            return;
+        }
         System.out.print("Enter ZIP code: ");
         String input = scanner.nextLine().trim();
 
@@ -236,6 +297,8 @@ public class Main {
                 System.out.println("Average residential total livable area for " + zipCode + ":\n" + avg + " square feet");
             }
 
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
@@ -248,6 +311,10 @@ public class Main {
                                                          PopulationProcessor populationProcessor,
                                                          HousingProcessor housingProcessor,
                                                          Scanner scanner) {
+        if (housingProcessor == null) {
+            System.out.println("Error: HousingProcessor is not available.");
+            return;
+        }
         System.out.print("Enter ZIP code: ");
         String input = scanner.nextLine().trim();
 
@@ -266,6 +333,8 @@ public class Main {
                 System.out.println("Residential market value per capita for " + zipCode + ": \n$" + result);
             }
 
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
@@ -278,6 +347,10 @@ public class Main {
                                                    PopulationProcessor populationProcessor,
                                                    HousingProcessor housingProcessor,
                                                    Scanner scanner) {
+        if (housingProcessor == null) {
+            System.out.println("Error: HousingProcessor is not available.");
+            return;
+        }
         System.out.print("Enter ZIP code: ");
         String input = scanner.nextLine().trim();
 
@@ -290,6 +363,10 @@ public class Main {
 
         try {
             HousingProcessor.PropertyValueSummary summary = housingProcessor.getPropertyValueSummary(zipCode);
+            if (summary == null) {
+                System.out.println("Error: Could not retrieve property value summary.");
+                return;
+            }
 
             if (summary.getMin() == 0 && summary.getMax() == 0 && summary.getMedian() == 0) {
                 System.out.println("No valid residential market value data found for ZIP code " + zipCode + ".");
@@ -300,6 +377,8 @@ public class Main {
                                     + "\n    Median: " + summary.getMedian());
             }
 
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {
@@ -312,6 +391,10 @@ public class Main {
                                                   PopulationProcessor populationProcessor,
                                                   HousingProcessor housingProcessor,
                                                   Scanner scanner) {
+        if (violationProcessor == null) {
+            System.out.println("Error: ParkingViolationProcessor is not available.");
+            return;
+        }
         System.out.print("Enter ZIP code: ");
 
         try {
@@ -319,19 +402,30 @@ public class Main {
 
             // Get all violation types for this ZIP
             Map<String, Integer> types = violationProcessor.getViolationTypesForZip(zipCode);
+            if (types == null) {
+                System.out.println("Error: Could not retrieve violation types.");
+                return;
+            }
 
             if (types.isEmpty()) {
                 System.out.println("No violations found for ZIP code " + zipCode);
             } else {
                 // Calculate total violations
                 int totalViolations = 0;
-                for (int count : types.values()) {
-                    totalViolations += count;
+                for (Integer count : types.values()) {
+                    if (count != null) {
+                        totalViolations += count;
+                    }
                 }
 
                 // Sort violations by count (descending)
                 List<Map.Entry<String, Integer>> sortedViolations = new ArrayList<>(types.entrySet());
-                sortedViolations.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+                sortedViolations.sort((a, b) -> {
+                    if (a == null || b == null || a.getValue() == null || b.getValue() == null) {
+                        return 0;
+                    }
+                    return b.getValue().compareTo(a.getValue());
+                });
 
                 // Display results
                 System.out.println("\n=== Violation Summary for ZIP " + zipCode + " ===");
@@ -342,6 +436,9 @@ public class Main {
                 int displayCount = Math.min(3, sortedViolations.size());
                 for (int i = 0; i < displayCount; i++) {
                     Map.Entry<String, Integer> entry = sortedViolations.get(i);
+                    if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+                        continue;
+                    }
                     String type = entry.getKey();
                     int count = entry.getValue();
                     double percentage = (double) count / totalViolations * 100;
@@ -350,6 +447,8 @@ public class Main {
                             i + 1, type, count, percentage);
                 }
             }
+        } catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("Invalid ZIP code. Please enter a valid number.");
         } catch (Exception e) {

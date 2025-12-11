@@ -18,9 +18,15 @@ public class PopulationProcessor<K, V extends Number> {
      * Works for any numeric type (Integer, Long, Double, etc.)
      */
     public int totalPopulation() {
+        if (population == null) {
+            throw new IllegalStateException("Population map is not initialized.");
+        }
         int sum = 0;
 
         for (Map.Entry<K, V> entry : population.entrySet()) {
+            if (entry == null) {
+                continue;
+            }
             V value = entry.getValue();
 
             if (value == null) {
