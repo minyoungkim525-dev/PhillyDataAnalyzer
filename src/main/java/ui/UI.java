@@ -1,15 +1,9 @@
 package ui;
 
-import common.House;
-import common.ParkingViolation;
-import data.*;
-import org.json.simple.parser.ParseException;
 import processor.HousingProcessor;
 import processor.ParkingViolationProcessor;
 import processor.PopulationProcessor;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,79 +42,12 @@ public class UI {
 
     /**
      * Main entry point for the UI.
-     * Called from Main.main()
+     * Called from Main.main() with already-initialized processors.
      */
-    public static void start(String[] args) {
-        if(args.length != 4){ // Error message 1
-            System.out.println("Invalid number of arguments.");
-            return;
-        }
-
-        String format = args[0];
-        if(!format.equals("csv") && !format.equals("json")){ // Error message 2
-            System.out.println("Error: Format should be listed as either \"json\" or \"csv\".");
-            return;
-        }
-        String violationsFile = args[1];
-        String propertiesFile = args[2];
-        String populationFile = args[3];
-
-        if (!canReadFile(violationsFile)) { //Error message 3.1
-            System.out.println("Error: Cannot open parking violations file: " + violationsFile);
-            return;
-        }
-        if (!canReadFile(propertiesFile)) { // Error message 3.2
-            System.out.println("Error: Cannot open properties file: " + propertiesFile);
-            return;
-        }
-        if (!canReadFile(populationFile)) { // Error message 3.3
-            System.out.println("Error: Cannot open population file: " + populationFile);
-            return;
-        }
-
-        // Read all data
-        try {
-            // Read parking violations based on format
-            List<ParkingViolation> violations;
-            if (format.equals("csv")) {
-                ParkingViolationCSVReader csvReader = new ParkingViolationCSVReader(violationsFile);
-                violations = csvReader.readData();
-            } else {
-                ParkingViolationJSONReader jsonReader = new ParkingViolationJSONReader(violationsFile);
-                violations = jsonReader.readData();
-            }
-
-            // Read properties
-            HousingReader housingReader = new HousingReader(propertiesFile);
-            List<House> houses = housingReader.readData();
-
-            // Read population
-            PopulationFileReader popReader = new PopulationFileReader(populationFile);
-            Map<Integer, Integer> populations = popReader.readData();
-
-            // Create processors
-            PopulationProcessor populationProcessor = new PopulationProcessor(populations);
-            ParkingViolationProcessor violationProcessor = new ParkingViolationProcessor(violations, populations);
-            HousingProcessor housingProcessor = HousingProcessor.getInstance(housingReader, popReader);
-
-            // Start menu loop
-            runMenuLoop(violationProcessor, populationProcessor, housingProcessor);
-
-        } catch (ParseException e) {
-            System.out.println("Error parsing JSON file: " + e.getMessage());
-            return;
-        } catch (IOException e) {
-            System.out.println("Error reading data files: " + e.getMessage());
-            return;
-        } catch (Exception e) {
-            System.out.println("Error reading data files: " + e.getMessage());
-            return;
-        }
-    }
-
-    private static boolean canReadFile(String filename) {
-        File f = new File(filename);
-        return f.exists() && f.isFile() && f.canRead();
+    public static void start(ParkingViolationProcessor violationProcessor,
+                             PopulationProcessor populationProcessor,
+                             HousingProcessor housingProcessor) {
+        runMenuLoop(violationProcessor, populationProcessor, housingProcessor);
     }
 
     private static void runMenuLoop(ParkingViolationProcessor violationProcessor,
@@ -136,7 +63,7 @@ public class UI {
             if (input.equals("0")) {
                 System.out.println("Goodbye!");
                 scanner.close();
-                return; // Exit the method cleanly
+                return;
             }
 
             // DESIGN PATTERN: Strategy - Execute strategy based on menu selection
@@ -287,7 +214,7 @@ public class UI {
 
         if (!input.matches("\\d{5}")) {
             System.out.println("Invalid ZIP code. Please enter a 5-digit ZIP code.");
-            return;  // Stop before continuing
+            return;
         }
 
         int zipCode = Integer.parseInt(input);
@@ -311,7 +238,7 @@ public class UI {
         }
     }
 
-    // Menu option 7: Display most common violation type for a ZIP code, shows top 3 violation types with counts and percentage
+    // Menu option 7: Display most common violation type for a ZIP code
     private static void handleMostCommonViolation(ParkingViolationProcessor violationProcessor,
                                                   PopulationProcessor populationProcessor,
                                                   HousingProcessor housingProcessor,
@@ -321,28 +248,23 @@ public class UI {
         try {
             int zipCode = Integer.parseInt(scanner.nextLine().trim());
 
-            // Get all violation types for this ZIP
             Map<String, Integer> types = violationProcessor.getViolationTypesForZip(zipCode);
 
             if (types.isEmpty()) {
                 System.out.println("No violations found for ZIP code " + zipCode);
             } else {
-                // Calculate total violations
                 int totalViolations = 0;
                 for (int count : types.values()) {
                     totalViolations += count;
                 }
 
-                // Sort violations by count (descending)
                 List<Map.Entry<String, Integer>> sortedViolations = new ArrayList<>(types.entrySet());
                 sortedViolations.sort((a, b) -> b.getValue().compareTo(a.getValue()));
 
-                // Display results
                 System.out.println("\n=== Violation Summary for ZIP " + zipCode + " ===");
                 System.out.println("Total violations: " + totalViolations);
                 System.out.println("\nTop violation types:");
 
-                // Show top 3 (or fewer if less than 3 types exist)
                 int displayCount = Math.min(3, sortedViolations.size());
                 for (int i = 0; i < displayCount; i++) {
                     Map.Entry<String, Integer> entry = sortedViolations.get(i);
